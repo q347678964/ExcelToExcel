@@ -99,7 +99,6 @@ void CExcelHandler::RemoveOutputFile(void)
 	if(CFile::GetStatus(this->OutputExcel_DataCheckPath,Fstatus,NULL)){
 		CFile::Remove(this->OutputExcel_DataCheckPath);
 	}
-	
 }
 
 void CExcelHandler::FindInputFile(void)
@@ -274,11 +273,12 @@ void CExcelHandler::OutputDataCheck(void)
 	int OutputSheetRow = 0;
 	int i = 0, j = 0;
 
+	IllusionExcelFile CheckExcelOperate;
 	/*下面开始写入Output Excel*/
-	OutExcelOperate.InitExcel();
-	OutExcelOperate.OpenExcelFile(this->OutputExcelPath);
-	OutExcelOperate.LoadSheet(CurSheet,1);
-	OutputSheetRow = OutExcelOperate.GetRowCount();
+	CheckExcelOperate.InitExcel();
+	CheckExcelOperate.OpenExcelFile(this->OutputExcelPath);
+	CheckExcelOperate.LoadSheet(CurSheet,1);
+	OutputSheetRow = CheckExcelOperate.GetRowCount();
 	OutputSheetRow = 1;
 
 	CString ReadCString;
@@ -301,10 +301,10 @@ void CExcelHandler::OutputDataCheck(void)
 		double diffTotal = 0.0;
 		double diffRemain = 0.0;
 
-		gDoubleDataCheck.ExcelCalcCStringTotalMoney = OutExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 12);
-		gDoubleDataCheck.ExcelCalcCStringRemainMoney = OutExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 13);
-		gDoubleDataCheck.InsertCStringTotalMoney = OutExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 16);
-		gDoubleDataCheck.InsertCStringRemainMoney = OutExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 17);
+		gDoubleDataCheck.ExcelCalcCStringTotalMoney = CheckExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 12);
+		gDoubleDataCheck.ExcelCalcCStringRemainMoney = CheckExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 13);
+		gDoubleDataCheck.InsertCStringTotalMoney = CheckExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 16);
+		gDoubleDataCheck.InsertCStringRemainMoney = CheckExcelOperate.GetCellDouble(OutputSheetRow + i + 1, 17);
 
 		diffTotal = gDoubleDataCheck.ExcelCalcCStringTotalMoney > gDoubleDataCheck.InsertCStringTotalMoney?\
 			gDoubleDataCheck.ExcelCalcCStringTotalMoney - gDoubleDataCheck.InsertCStringTotalMoney:\
@@ -315,55 +315,17 @@ void CExcelHandler::OutputDataCheck(void)
 			gDoubleDataCheck.InsertCStringRemainMoney - gDoubleDataCheck.ExcelCalcCStringRemainMoney;
 
 		if(diffTotal >= 0.01 || diffRemain >= 0.01) {
-			OutExcelOperate.SetCellString(OutputSheetRow + i + 1, 18, CString("1"));
+			CheckExcelOperate.SetCellString(OutputSheetRow + i + 1, 18, CString("1"));
 		} else {
-			OutExcelOperate.SetCellString(OutputSheetRow + i + 1, 18, CString("0"));
+			CheckExcelOperate.SetCellString(OutputSheetRow + i + 1, 18, CString("0"));
 		}
 #endif
 	}
-	/*清理中间数据*/
-#if 1
-	/*先读取数据，再写入数据，替换掉公式算出来的结果*/
-	{
-		CString TmpCstring;
-		unsigned int RowNum = this->InputExcelNum;
-		unsigned int PrintRouNum = RowNum / 10;
-
-		if(PrintRouNum == 0) PrintRouNum = 1;
-		for(int i = 2; i <= RowNum+1; i++) {
-			for(int j = 1;j <= 11; j++) {
-				TmpCstring = OutExcelOperate.GetCellString(i,j);
-
-				OutExcelOperate.SetCellString(i, j, TmpCstring);
-			}
-
-			if(i % PrintRouNum == 0)
-				this->Printf("正在剔除公式(%u/%u)\r\n",i - 1,RowNum);
-		}
-	}
-
-	
-
-	{
-		unsigned int RowNum = this->InputExcelNum;
-		unsigned int PrintRouNum = RowNum / 10;
-		if(PrintRouNum == 0) PrintRouNum = 1;
-		for(int i = 1; i <= RowNum; i++) {
-			for(int j = 19;j <= 28; j++) {
-				OutExcelOperate.SetCellString(i, j, CString(""));
-			}
-
-			if(i % PrintRouNum == 0)
-				this->Printf("正在剔除临时数据(%u/%u)\r\n",i,RowNum);
-		}
 
 
-	}
-
-#endif
-	OutExcelOperate.SaveasXSLFile(this->OutputExcel_DataCheckPath);
-	OutExcelOperate.CloseExcelFile();
-	OutExcelOperate.ReleaseExcel();
+	CheckExcelOperate.SaveasXSLFile(this->OutputExcel_DataCheckPath);
+	CheckExcelOperate.CloseExcelFile();
+	CheckExcelOperate.ReleaseExcel();
 
 	CFileStatus Fstatus;
 	if(CFile::GetStatus(this->OutputExcelPath,Fstatus,NULL)){
@@ -377,8 +339,9 @@ void CExcelHandler::Excel_AllHandler(void)
 	OutputExcelPath = CExcelHandler::GetModulePath();
 	OutputExcel_DataCheckPath = CExcelHandler::GetModulePath();
 
+
 	OutputExcel_ModlePath += CString("\\..\\Input\\总表.xlsx");
-	OutputExcelPath += CString("\\..\\Output\\output.xlsx");
+	OutputExcelPath += CString("\\..\\Output\\Total.xlsx");
 	OutputExcel_DataCheckPath += CString("\\..\\Output\\汇总表.xlsx");
 
 	CExcelHandler::RemoveOutputFile();
@@ -391,5 +354,10 @@ void CExcelHandler::Excel_AllHandler(void)
 
 	CExcelHandler::OutputDataCheck();
 
-	AfxMessageBox(_T("完成"));
+	AfxMessageBox(_T("只能帮你到这里了，请手动优化最后的输出吧"));
+
+	this->Printf("==================================================================\r\n");
+	this->Printf("1.选中EGHK列,Ctrl+C复制，右键选择性粘贴，只选数值\r\n");
+	this->Printf("2.删除S列之后的多余数据\r\n");
+	this->Printf("==================================================================\r\n");
 }
